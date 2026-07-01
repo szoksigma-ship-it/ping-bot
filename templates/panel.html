@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bot Panel</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0a0c10;
+    --surface: #0f1117;
+    --card: #13161f;
+    --border: #1e2433;
+    --border-glow: #00d4ff33;
+    --cyan: #00d4ff;
+    --cyan-dim: #00d4ff88;
+    --cyan-faint: #00d4ff18;
+    --purple: #7c5cfc;
+    --purple-dim: #7c5cfc66;
+    --red: #ff4757;
+    --green: #2ed573;
+    --yellow: #ffa502;
+    --text: #c8d6e5;
+    --text-muted: #566275;
+    --text-dim: #8395a7;
+    --font-main: 'Rajdhani', sans-serif;
+    --font-mono: 'Share Tech Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-main);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    height: 48px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .topbar::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cyan-dim), transparent);
+  }
+  .logo {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--cyan);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+  }
+  .logo span { color: var(--text-muted); }
+  .topbar-status {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+  }
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* MAIN LAYOUT */
+  .layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 200px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .sidebar-section {
+    padding: 14px 12px 6px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+    position: relative;
+  }
+  .nav-item:hover { color: var(--text); background: var(--cyan-faint); }
+  .nav-item.active {
+    color: var(--cyan);
+    border-left-color: var(--cyan);
+    background: var(--cyan-faint);
+  }
+  .nav-item .nav-icon { font-size: 16px; width: 18px; text-align: center; }
+  .nav-badge {
+    margin-left: auto;
+    background: var(--cyan-faint);
+    border: 1px solid var(--cyan-dim);
+    color: var(--cyan);
+    font-size: 10px;
+    font-family: var(--font-mono);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+
+  /* CENTER */
+  .center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* CONSOLE */
+  .console-area {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 20px 0;
+  }
+  .console-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .console-title {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+  }
+  .console-box {
+    flex: 1;
+    background: #080a0e;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow-y: auto;
+    padding: 12px 14px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.7;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .log-line { display: flex; gap: 10px; }
+  .log-time { color: var(--text-muted); flex-shrink: 0; }
+  .log-badge {
+    flex-shrink: 0;
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    align-self: center;
+  }
+  .log-badge.mod { background: #7c5cfc22; color: var(--purple); border: 1px solid var(--purple-dim); }
+  .log-badge.admin { background: #00d4ff18; color: var(--cyan); border: 1px solid var(--cyan-dim); }
+  .log-badge.owner { background: #ffa50222; color: var(--yellow); border: 1px solid #ffa50266; }
+  .log-badge.sys { background: #2ed57318; color: var(--green); border: 1px solid #2ed57344; }
+  .log-badge.warn { background: #ff475718; color: var(--red); border: 1px solid #ff475744; }
+  .log-text { color: var(--text); }
+  .log-text .hi { color: var(--cyan); }
+  .log-text .warn { color: var(--red); }
+  .log-text .ok { color: var(--green); }
+
+  /* INPUT BAR */
+  .input-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 10px 20px 14px;
+    flex-shrink: 0;
+  }
+  .input-prompt {
+    background: #080a0e;
+    border: 1px solid var(--border);
+    border-right: none;
+    border-radius: 4px 0 0 4px;
+    padding: 0 12px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--cyan);
+    flex-shrink: 0;
+  }
+  .input-field {
+    flex: 1;
+    background: #080a0e;
+    border: 1px solid var(--border);
+    border-left: none;
+    border-right: none;
+    height: 38px;
+    padding: 0 12px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .input-field:focus { border-color: var(--cyan-dim); }
+  .input-field::placeholder { color: var(--text-muted); }
+  .input-send {
+    background: var(--cyan-faint);
+    border: 1px solid var(--cyan-dim);
+    border-left: none;
+    border-radius: 0 4px 4px 0;
+    height: 38px;
+    padding: 0 16px;
+    color: var(--cyan);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 1px;
+  }
+  .input-send:hover { background: var(--cyan); color: #000; }
+
+  /* RIGHT PANEL */
+  .right-panel {
+    width: 260px;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .panel-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+  }
+  .help-scroll { overflow-y: auto; flex: 1; padding: 10px 12px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  .cmd-group { margin-bottom: 16px; }
+  .cmd-group-title {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cmd-row { padding: 5px 0; }
+  .cmd-name {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--cyan);
+    display: block;
+    margin-bottom: 1px;
+  }
+  .cmd-desc { font-size: 12px; color: var(--text-dim); line-height: 1.4; }
+
+  /* CONTENT TABS */
+  .content-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .section-title {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .list-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+  }
+  .list-table th {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .list-table td {
+    padding: 8px 10px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .list-table tr:last-child td { border-bottom: none; }
+  .list-table tr:hover td { background: var(--cyan-faint); }
+  .id-cell { font-family: var(--font-mono); font-size: 12px; color: var(--cyan); }
+  .name-cell { font-weight: 600; }
+
+  .btn-remove {
+    background: none;
+    border: 1px solid #ff475744;
+    color: var(--red);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .btn-remove:hover { background: #ff475722; border-color: var(--red); }
+
+  .add-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .add-input {
+    flex: 1;
+    background: #080a0e;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 7px 12px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .add-input:focus { border-color: var(--cyan-dim); }
+  .add-input::placeholder { color: var(--text-muted); }
+  .btn-add {
+    background: var(--cyan-faint);
+    border: 1px solid var(--cyan-dim);
+    color: var(--cyan);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 7px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 1px;
+  }
+  .btn-add:hover { background: var(--cyan); color: #000; }
+
+  .card-block {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  /* QUOTES */
+  .quote-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--purple);
+    border-radius: 4px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    transition: border-color 0.15s;
+  }
+  .quote-card:hover { border-left-color: var(--cyan); }
+  .quote-text { font-size: 14px; color: var(--text); margin-bottom: 6px; line-height: 1.5; }
+  .quote-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
+  .quote-cat {
+    display: inline-block;
+    background: var(--purple-dim);
+    color: var(--purple);
+    font-size: 10px;
+    padding: 1px 7px;
+    border-radius: 2px;
+    margin-right: 8px;
+    border: 1px solid var(--purple-dim);
+  }
+  .quote-add-form {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .form-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .form-row:last-child { margin-bottom: 0; }
+  .form-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .form-col { display: flex; flex-direction: column; flex: 1; }
+  .form-textarea {
+    background: #080a0e;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 8px 12px;
+    font-family: var(--font-main);
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    resize: vertical;
+    min-height: 60px;
+    transition: border-color 0.15s;
+  }
+  .form-textarea:focus { border-color: var(--cyan-dim); }
+  .form-select {
+    background: #080a0e;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 7px 10px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text);
+    outline: none;
+  }
+
+  /* EMPTY STATE */
+  .empty {
+    text-align: center;
+    padding: 24px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  .empty-icon { font-size: 28px; margin-bottom: 8px; opacity: 0.4; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">BOT<span>//</span>PANEL</div>
+  <div class="topbar-status">
+    <div class="dot"></div>
+    BOT ONLINE &nbsp;|&nbsp; SERWER: Mój Discord
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">Zarządzanie</div>
+    <div class="nav-item active" onclick="showTab('admins', this)">
+      <span class="nav-icon">🛠</span> Admini
+      <span class="nav-badge" id="badge-admins">0</span>
+    </div>
+    <div class="nav-item" onclick="showTab('mods', this)">
+      <span class="nav-icon">⚔</span> Moderatorzy
+      <span class="nav-badge" id="badge-mods">0</span>
+    </div>
+    <div class="nav-item" onclick="showTab('targets', this)">
+      <span class="nav-icon">🚫</span> Targety
+      <span class="nav-badge" id="badge-targets">0</span>
+    </div>
+    <div class="nav-item" onclick="showTab('whitelist', this)">
+      <span class="nav-icon">🛡</span> Whitelist
+      <span class="nav-badge" id="badge-whitelist">0</span>
+    </div>
+    <div class="sidebar-section">Inne</div>
+    <div class="nav-item" onclick="showTab('quotes', this)">
+      <span class="nav-icon">💬</span> Cytaty
+    </div>
+    <div class="sidebar-footer">
+      data.json · lokalny panel
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="center">
+
+    <!-- CONTENT -->
+    <div class="content-body" id="content-area">
+
+      <!-- ADMINI -->
+      <div class="tab-content active" id="tab-admins">
+        <div class="section-title">Administratorzy</div>
+        <div class="card-block">
+          <table class="list-table">
+            <thead><tr><th>#</th><th>Nazwa</th><th>Discord ID</th><th></th></tr></thead>
+            <tbody id="list-admins"></tbody>
+          </table>
+          <div class="add-row">
+            <input class="add-input" id="input-admins" placeholder="Discord ID (np. 123456789012345678)" />
+            <button class="btn-add" onclick="addEntry('admins')">+ DODAJ</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODERATORZY -->
+      <div class="tab-content" id="tab-mods">
+        <div class="section-title">Moderatorzy</div>
+        <div class="card-block">
+          <table class="list-table">
+            <thead><tr><th>#</th><th>Nazwa</th><th>Discord ID</th><th></th></tr></thead>
+            <tbody id="list-mods"></tbody>
+          </table>
+          <div class="add-row">
+            <input class="add-input" id="input-mods" placeholder="Discord ID" />
+            <button class="btn-add" onclick="addEntry('mods')">+ DODAJ</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TARGETY -->
+      <div class="tab-content" id="tab-targets">
+        <div class="section-title">Targety VC</div>
+        <div class="card-block">
+          <table class="list-table">
+            <thead><tr><th>#</th><th>Discord ID</th><th></th></tr></thead>
+            <tbody id="list-targets"></tbody>
+          </table>
+          <div class="add-row">
+            <input class="add-input" id="input-targets" placeholder="Discord ID" />
+            <button class="btn-add" onclick="addEntry('targets')">+ DODAJ</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- WHITELIST -->
+      <div class="tab-content" id="tab-whitelist">
+        <div class="section-title">Whitelist VC</div>
+        <div class="card-block">
+          <table class="list-table">
+            <thead><tr><th>#</th><th>Discord ID</th><th></th></tr></thead>
+            <tbody id="list-whitelist"></tbody>
+          </table>
+          <div class="add-row">
+            <input class="add-input" id="input-whitelist" placeholder="Discord ID" />
+            <button class="btn-add" onclick="addEntry('whitelist')">+ DODAJ</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CYTATY -->
+      <div class="tab-content" id="tab-quotes">
+        <div class="section-title">Dodaj cytat</div>
+        <div class="quote-add-form">
+          <div class="form-col" style="margin-bottom:8px">
+            <div class="form-label">Treść cytatu</div>
+            <textarea class="form-textarea" id="q-text" placeholder="Wpisz treść cytatu..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-col">
+              <div class="form-label">Autor</div>
+              <input class="add-input" id="q-author" placeholder="np. Mistrz Patryk" style="margin:0" />
+            </div>
+            <div class="form-col">
+              <div class="form-label">Kategoria</div>
+              <select class="form-select" id="q-cat">
+                <option value="sword">sword</option>
+                <option value="crystal">crystal</option>
+                <option value="shield">shield</option>
+                <option value="crown">crown</option>
+                <option value="god">god</option>
+                <option value="fire">fire</option>
+                <option value="computer">computer</option>
+                <option value="camera">camera</option>
+                <option value="flag">flag</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row" style="justify-content:flex-end;margin-top:8px">
+            <button class="btn-add" onclick="addQuote()">+ DODAJ CYTAT</button>
+          </div>
+        </div>
+
+        <div class="section-title">Lista cytatów</div>
+        <div id="quotes-list"></div>
+      </div>
+
+    </div><!-- /content-body -->
+
+    <!-- CONSOLE -->
+    <div class="console-area" style="max-height: 200px;">
+      <div class="console-header">
+        <div class="console-title">// Console bota</div>
+      </div>
+      <div class="console-box" id="console-box">
+        <div class="log-line">
+          <span class="log-time">00:00:00</span>
+          <span class="log-badge sys">SYS</span>
+          <span class="log-text"><span class="ok">Panel załadowany.</span> Wpisz komendę poniżej.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- INPUT BAR -->
+    <div class="input-bar">
+      <div class="input-prompt">$&gt;</div>
+      <input class="input-field" id="cmd-input" placeholder="Wpisz komendę... np. -moderator add 123456789" onkeydown="if(event.key==='Enter') sendCmd()" />
+      <button class="input-send" onclick="sendCmd()">WYŚLIJ</button>
+    </div>
+
+  </div><!-- /center -->
+
+  <!-- RIGHT PANEL - HELP -->
+  <div class="right-panel">
+    <div class="panel-header">// Panel pomocy</div>
+    <div class="help-scroll">
+      <div class="cmd-group">
+        <div class="cmd-group-title">👑 Właściciel</div>
+        <div class="cmd-row">
+          <span class="cmd-name">-admin add @user</span>
+          <span class="cmd-desc">Dodaje do listy administratorów</span>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-name">-admin remove @user</span>
+          <span class="cmd-desc">Usuwa z listy administratorów</span>
+        </div>
+      </div>
+      <div class="cmd-group">
+        <div class="cmd-group-title">🛠 Admin</div>
+        <div class="cmd-row">
+          <span class="cmd-name">-moderator add @user</span>
+          <span class="cmd-desc">Dodaje moderatora</span>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-name">-moderator remove @user</span>
+          <span class="cmd-desc">Usuwa moderatora</span>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-name">-dodaj @user</span>
+          <span class="cmd-desc">Dodaje do targetów VC</span>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-name">-usun @user</span>
+          <span class="cmd-desc">Usuwa z targetów VC</span>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-name">-whitelist add/remove @user</span>
+          <span class="cmd-desc">Zarządza whitelistą VC</span>
+        </div>
+      </div>
+      <div class="cmd-group">
+        <div class="cmd-group-title">⚔ Moderator</div>
+        <div class="cmd-row">
+          <span class="cmd-name">-ping @user [cykle] [wiad]</span>
+          <span class="cmd-desc">Ghost ping na wszystkich kanałach</span>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-name">-spam @user [ilość] [wiad]</span>
+          <span class="cmd-desc">Spam ghost pingami</span>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-name">-dm @user [ilość] [treść]</span>
+          <span class="cmd-desc">Wysyła DM do użytkownika</span>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-name">-stop</span>
+          <span class="cmd-desc">Przerywa aktywne akcje</span>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-name">-purge [ilość]</span>
+          <span class="cmd-desc">Usuwa wiadomości z czatu</span>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-name">-ustawkanal [min]</span>
+          <span class="cmd-desc">Auto-cytaty co X minut</span>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-name">-usunkanal</span>
+          <span class="cmd-desc">Wyłącza auto-cytaty</span>
+        </div>
+      </div>
+      <div class="cmd-group">
+        <div class="cmd-group-title">👤 Ogólne</div>
+        <div class="cmd-row">
+          <span class="cmd-name">-cytat</span>
+          <span class="cmd-desc">Losuje cytat z bazy</span>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-name">-lista</span>
+          <span class="cmd-desc">Wyświetla hierarchię serwera</span>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-name">-help</span>
+          <span class="cmd-desc">Panel pomocy na Discordzie</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /layout -->
+
+<script>
+const DATA_FILE_NOTE = "Ten panel działa z data.json przez Flask (web_panel.py).";
+
+// Stan przechowywany w pamięci (w trybie standalone - bez Flask)
+const state = {
+  admins: [],
+  mods: [],
+  targets: [],
+  whitelist: [],
+};
+
+const quotes = [];
+
+function now() {
+  return new Date().toLocaleTimeString('pl-PL', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+function log(badge, badgeClass, msg) {
+  const box = document.getElementById('console-box');
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = `<span class="log-time">${now()}</span><span class="log-badge ${badgeClass}">${badge}</span><span class="log-text">${msg}</span>`;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+function showTab(name, el) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+function refreshList(listName) {
+  const tbody = document.getElementById('list-' + listName);
+  if (!tbody) return;
+  const items = state[listName];
+  const badge = document.getElementById('badge-' + listName);
+  if (badge) badge.textContent = items.length;
+
+  if (items.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4"><div class="empty"><div class="empty-icon">◻</div>Brak wpisów</div></td></tr>`;
+    return;
+  }
+
+  const hasName = (listName === 'admins' || listName === 'mods');
+  tbody.innerHTML = items.map((id, i) => `
+    <tr>
+      <td style="color:var(--text-muted);font-family:var(--font-mono);font-size:12px">${i+1}</td>
+      ${hasName ? `<td class="name-cell">—</td>` : ''}
+      <td class="id-cell">${id}</td>
+      <td><button class="btn-remove" onclick="removeEntry('${listName}', ${id})">USUŃ</button></td>
+    </tr>
+  `).join('');
+}
+
+function addEntry(listName) {
+  const input = document.getElementById('input-' + listName);
+  const val = input.value.trim();
+  if (!val || !/^\d{17,19}$/.test(val)) {
+    log('ERR', 'warn', `<span class="warn">Nieprawidłowe ID. Podaj poprawne Discord ID (17-19 cyfr).</span>`);
+    return;
+  }
+  const id = parseInt(val);
+  if (state[listName].includes(id)) {
+    log('WARN', 'warn', `ID <span class="hi">${id}</span> już istnieje na liście <span class="hi">${listName}</span>.`);
+    return;
+  }
+  state[listName].push(id);
+  input.value = '';
+  refreshList(listName);
+  log('OK', 'sys', `Dodano <span class="hi">${id}</span> do <span class="hi">${listName}</span>. <span style="color:var(--text-muted)">(zapisz przez Flask/API)</span>`);
+}
+
+function removeEntry(listName, id) {
+  const idx = state[listName].indexOf(id);
+  if (idx !== -1) state[listName].splice(idx, 1);
+  refreshList(listName);
+  log('DEL', 'warn', `Usunięto <span class="hi">${id}</span> z <span class="hi">${listName}</span>.`);
+}
+
+function addQuote() {
+  const text = document.getElementById('q-text').value.trim();
+  const author = document.getElementById('q-author').value.trim();
+  const cat = document.getElementById('q-cat').value;
+  if (!text || !author) { log('ERR', 'warn', '<span class="warn">Wypełnij treść i autora cytatu.</span>'); return; }
+  quotes.push({ text, author, cat });
+  document.getElementById('q-text').value = '';
+  document.getElementById('q-author').value = '';
+  renderQuotes();
+  log('OK', 'sys', `Dodano cytat od <span class="hi">${author}</span> [${cat}].`);
+}
+
+function renderQuotes() {
+  const el = document.getElementById('quotes-list');
+  if (quotes.length === 0) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">◻</div>Brak cytatów w sesji</div>`;
+    return;
+  }
+  el.innerHTML = quotes.map((q, i) => `
+    <div class="quote-card">
+      <div class="quote-text">"${q.text}"</div>
+      <div class="quote-meta"><span class="quote-cat">${q.cat}</span>${q.author}</div>
+    </div>
+  `).join('');
+}
+
+function sendCmd() {
+  const input = document.getElementById('cmd-input');
+  const cmd = input.value.trim();
+  input.value = '';
+  if (!cmd) return;
+
+  log('CMD', 'admin', `<span class="hi">${cmd}</span>`);
+
+  const parts = cmd.split(' ');
+  const base = parts[0].toLowerCase();
+  const sub = parts[1] ? parts[1].toLowerCase() : '';
+  const id = parts[2] ? parseInt(parts[2]) : null;
+
+  if (base === '-moderator' && sub === 'add' && id) {
+    if (!state.mods.includes(id)) { state.mods.push(id); refreshList('mods'); log('OK','sys',`Moderator <span class="hi">${id}</span> dodany.`); }
+    else log('WARN','warn',`ID już jest moderatorem.`);
+  } else if (base === '-moderator' && sub === 'remove' && id) {
+    const i = state.mods.indexOf(id); if(i!==-1){state.mods.splice(i,1);refreshList('mods');log('DEL','warn',`Moderator <span class="hi">${id}</span> usunięty.`);}
+    else log('WARN','warn',`Nie znaleziono moderatora.`);
+  } else if (base === '-admin' && sub === 'add' && id) {
+    if (!state.admins.includes(id)) { state.admins.push(id); refreshList('admins'); log('OK','sys',`Admin <span class="hi">${id}</span> dodany.`); }
+    else log('WARN','warn',`ID już jest adminem.`);
+  } else if (base === '-admin' && sub === 'remove' && id) {
+    const i = state.admins.indexOf(id); if(i!==-1){state.admins.splice(i,1);refreshList('admins');log('DEL','warn',`Admin <span class="hi">${id}</span> usunięty.`);}
+    else log('WARN','warn',`Nie znaleziono admina.`);
+  } else if (base === '-lista') {
+    log('INFO','mod',`Admini: ${state.admins.length} | Mody: ${state.mods.length} | Targety: ${state.targets.length} | Whitelist: ${state.whitelist.length}`);
+  } else if (base === '-help') {
+    log('INFO','sys',`Otwórz panel pomocy po prawej stronie —&gt;`);
+  } else {
+    log('WARN','warn',`<span class="warn">Nieznana komenda: ${base}</span> — użyj panelu bocznego lub sprawdź help.`);
+  }
+}
+
+// Init
+['admins','mods','targets','whitelist'].forEach(refreshList);
+renderQuotes();
+log('SYS', 'sys', `Wszystkie moduły załadowane. Wersja <span class="hi">1.0</span>`);
+</script>
+</body>
+</html>
