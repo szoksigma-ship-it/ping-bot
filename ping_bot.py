@@ -7,10 +7,6 @@ import os
 from collections import deque
 
 # ─── KONFIGURACJA ────────────────────────────────────────────────────────────────
-import os
-
-TOKEN = os.getenv("DISCORD_TOKEN")
-bot.run(TOKEN)
 GUILD_ID   = 1279536565537738865
 PREFIX     = "-"
 OWNER_ID   = 1195685896050180146
@@ -518,7 +514,7 @@ async def help_cmd(ctx):
     if is_mod(ctx.author.id):
         mod_desc = (
             "`-ping @user [cykle] [wiad]` - Ghost pinguje użytkownika na wszystkich kanałach na X liczbę cyklów\n"
-            "`-spam @user [ilość] [wiad]` - Spam ghost pingami na obecnym kanale\n"
+            "`-spam @user [ilość] [wiad]` - Spam ghost pingami na obecnym kanale VC\n"
             "`-dm @user [ilość] [treść]` - Wysyła określoną ilość wiadomości prywatnych\n"
             "`-stop` - Natychmiastowo przerywa aktywne pingi / spamy / dmy\n"
             "`-purge [ilość]` - Usuwa określoną liczbę wiadomości z czatu\n"
@@ -756,5 +752,6 @@ async def stoploop_cmd(ctx):
     loop_active = False
     await ctx.send("⏹️ Zapętlanie wyłączone.")
 
-bot.run(BOT_TOKEN)
+TOKEN = os.getenv("DISCORD_TOKEN")
+bot.run(TOKEN)
 
