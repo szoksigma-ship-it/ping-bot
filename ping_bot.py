@@ -568,48 +568,30 @@ async def extract_info(url):
     import yt_dlp
 
     ydl_opts = {
-        "format": "bestaudio/best",
+        "format": "bestaudio",
         "cookiefile": "cookies.txt",
         "quiet": True,
         "no_warnings": True,
         "default_search": "auto",
         "noplaylist": True,
-        "extractor_args": {
-            "youtube": {
-                "player_client": ["android"]
-            }
-        }
+        "extract_flat": False
     }
 
     loop = asyncio.get_event_loop()
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = await loop.run_in_executor(
-            None,
-            lambda: ydl.extract_info(url, download=False)
-        )
+    def _extract():
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            return ydl.extract_info(url, download=False)
+
+    info = await loop.run_in_executor(None, _extract)
 
     if "entries" in info:
         info = info["entries"][0]
 
+    if "url" not in info:
+        raise Exception("Nie udało się pobrać strumienia audio.")
+
     return info["url"], info.get("title", url)
-
-def play_next(vc):
-    """Odpala następny utwór z kolejki. Wywołuje się automatycznie po zakończeniu."""
-    global current_track, loop_active
-
-    if loop_active and current_track:
-        src = discord.FFmpegPCMAudio(current_track[0], **FFMPEG_OPTS)
-        vc.play(src, after=lambda e: play_next(vc))
-        return
-
-    if vc_queue:
-        track = vc_queue.popleft()
-        current_track = track
-        src = discord.FFmpegPCMAudio(track[0], **FFMPEG_OPTS)
-        vc.play(src, after=lambda e: play_next(vc))
-    else:
-        current_track = None
 # ─── VCPLAY ──────────────────────────────────────────────────────────────────────
 
 @bot.command(name="vcplay")
