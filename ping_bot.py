@@ -584,15 +584,18 @@ FFMPEG_OPTS = {
     "options": "-vn -bufsize 512k"
 }
 
-async def extract_info(url):
-    import yt_dlp
-    ydl_opts = {
-        "format": "bestaudio/best",
-        "quiet": True,
-        "no_warnings": True,
-        "default_search": "auto",
-        "noplaylist": True,
+ydl_opts = {
+    "format": "bestaudio/best",
+    "quiet": True,
+    "no_warnings": True,
+    "default_search": "auto",
+    "noplaylist": True,
+    "extractor_args": {
+        "youtube": {
+            "player_client": ["android"]
+        }
     }
+}
     loop = asyncio.get_event_loop()
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = await loop.run_in_executor(None, lambda: ydl.extract_info(url, download=False))
