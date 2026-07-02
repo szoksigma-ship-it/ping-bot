@@ -576,18 +576,19 @@ async def dj_remove(ctx, member: discord.Member):
 async def extract_info(url):
     import yt_dlp
 
-    ydl_opts = {
-        "format": "bestaudio/best",
-        "quiet": True,
-        "no_warnings": True,
-        "default_search": "auto",
-        "noplaylist": True,
-        "extractor_args": {
-            "youtube": {
-                "player_client": ["android"]
-            }
+ydl_opts = {
+    "format": "bestaudio/best",
+    "cookiefile": "cookies.txt",
+    "quiet": True,
+    "no_warnings": True,
+    "default_search": "auto",
+    "noplaylist": True,
+    "extractor_args": {
+        "youtube": {
+            "player_client": ["android"]
         }
     }
+}
 
     loop = asyncio.get_event_loop()
 
