@@ -573,52 +573,34 @@ async def dj_remove(ctx, member: discord.Member):
     save_data()
     await ctx.send(f"🔇 {member.mention} stracił rangę **DJ**.")
 
-# ─── STAN ODTWARZACZA ────────────────────────────────────────────────────────────
-import collections
-vc_queue        = collections.deque()   # kolejka: listy [audio_url, title, yt_url]
-loop_active     = False
-current_track   = None                  # aktualnie grany [audio_url, title, yt_url]
+async def extract_info(url):
+    import yt_dlp
 
-FFMPEG_OPTS = {
-    "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -probesize 32 -analyzeduration 0",
-    "options": "-vn -bufsize 512k"
-}
-
-ydl_opts = {
-    "format": "bestaudio/best",
-    "quiet": True,
-    "no_warnings": True,
-    "default_search": "auto",
-    "noplaylist": True,
-    "extractor_args": {
-        "youtube": {
-            "player_client": ["android"]
+    ydl_opts = {
+        "format": "bestaudio/best",
+        "quiet": True,
+        "no_warnings": True,
+        "default_search": "auto",
+        "noplaylist": True,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android"]
+            }
         }
     }
-}
+
     loop = asyncio.get_event_loop()
+
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = await loop.run_in_executor(None, lambda: ydl.extract_info(url, download=False))
+        info = await loop.run_in_executor(
+            None,
+            lambda: ydl.extract_info(url, download=False)
+        )
+
     if "entries" in info:
         info = info["entries"][0]
+
     return info["url"], info.get("title", url)
-
-def play_next(vc):
-    """Odpala następny utwór z kolejki. Wywołuje się automatycznie po zakończeniu."""
-    global current_track, loop_active
-    if loop_active and current_track:
-        # zapętl ten sam utwór
-        src = discord.FFmpegPCMAudio(current_track[0], **FFMPEG_OPTS)
-        vc.play(src, after=lambda e: play_next(vc))
-        return
-    if vc_queue:
-        track = vc_queue.popleft()
-        current_track = track
-        src = discord.FFmpegPCMAudio(track[0], **FFMPEG_OPTS)
-        vc.play(src, after=lambda e: play_next(vc))
-    else:
-        current_track = None
-
 # ─── VCPLAY ──────────────────────────────────────────────────────────────────────
 
 @bot.command(name="vcplay")
