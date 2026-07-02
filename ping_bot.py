@@ -552,43 +552,34 @@ def is_dj(user_id):
 
 # ─── DJ — ZARZĄDZANIE (tylko Owner) ─────────────────────────────────────────────
 
-@bot.group(name="dj", invoke_without_command=True)
-async def dj_grp(ctx):
-    if ctx.author.id == OWNER_ID:
-        await ctx.send("`-dj add @user` / `-dj remove @user`")
+# ─── STAN ODTWARZACZA ────────────────────────────────────────────────────────────
+import collections
 
-@dj_grp.command(name="add")
-async def dj_add(ctx, member: discord.Member):
-    if not is_mod(ctx.author.id):
-        return
-    storage["djs"].add(member.id)
-    save_data()
-    await ctx.send(f"🎧 {member.mention} ma teraz rangę **DJ**.")
+vc_queue = collections.deque()   # kolejka: listy [audio_url, title, yt_url]
+loop_active = False
+current_track = None             # aktualnie grany [audio_url, title, yt_url]
 
-@dj_grp.command(name="remove")
-async def dj_remove(ctx, member: discord.Member):
-    if not is_mod(ctx.author.id):
-        return
-    storage["djs"].discard(member.id)
-    save_data()
-    await ctx.send(f"🔇 {member.mention} stracił rangę **DJ**.")
+FFMPEG_OPTS = {
+    "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -probesize 32 -analyzeduration 0",
+    "options": "-vn -bufsize 512k"
+}
 
 async def extract_info(url):
     import yt_dlp
 
-ydl_opts = {
-    "format": "bestaudio/best",
-    "cookiefile": "cookies.txt",
-    "quiet": True,
-    "no_warnings": True,
-    "default_search": "auto",
-    "noplaylist": True,
-    "extractor_args": {
-        "youtube": {
-            "player_client": ["android"]
+    ydl_opts = {
+        "format": "bestaudio/best",
+        "cookiefile": "cookies.txt",
+        "quiet": True,
+        "no_warnings": True,
+        "default_search": "auto",
+        "noplaylist": True,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android"]
+            }
         }
     }
-}
 
     loop = asyncio.get_event_loop()
 
@@ -602,6 +593,23 @@ ydl_opts = {
         info = info["entries"][0]
 
     return info["url"], info.get("title", url)
+
+def play_next(vc):
+    """Odpala następny utwór z kolejki. Wywołuje się automatycznie po zakończeniu."""
+    global current_track, loop_active
+
+    if loop_active and current_track:
+        src = discord.FFmpegPCMAudio(current_track[0], **FFMPEG_OPTS)
+        vc.play(src, after=lambda e: play_next(vc))
+        return
+
+    if vc_queue:
+        track = vc_queue.popleft()
+        current_track = track
+        src = discord.FFmpegPCMAudio(track[0], **FFMPEG_OPTS)
+        vc.play(src, after=lambda e: play_next(vc))
+    else:
+        current_track = None
 # ─── VCPLAY ──────────────────────────────────────────────────────────────────────
 
 @bot.command(name="vcplay")
